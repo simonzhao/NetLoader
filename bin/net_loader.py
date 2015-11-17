@@ -7,10 +7,15 @@ sys.setdefaultencoding( 'utf8' );
 import getopt;
 import progressbar;
 import time;
+import thread;
 
 host_val = "";
 port_val = 0;
 max_nums = 0;
+
+def runner( host, val ):
+    print "Host:%s\tPort:%d" % ( host, val );
+    pass;
 
 if __name__ == "__main__":
     options, args = getopt.getopt(
@@ -39,6 +44,7 @@ if __name__ == "__main__":
     progress = progressbar.ProgressBar( widgets= widgets, maxval=max_nums ).start();
     for i in range( 1, max_nums ):
         progress.update( i );
+        thread.start_new_thread( runner, ( host_val, port_val ) );
         time.sleep( 0.05 );
     progress.finish();
     pass;
