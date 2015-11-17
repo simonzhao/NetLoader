@@ -5,6 +5,8 @@ reload( sys );
 sys.setdefaultencoding( 'utf8' );
 
 import getopt;
+import progressbar;
+import time;
 
 host_val = "";
 port_val = 0;
@@ -30,6 +32,14 @@ if __name__ == "__main__":
         elif name == '--max':
             max_nums = int( value );
 
-    print "测试服务器[%s:%d], 最大连接数:[%d]" % ( host_val, port_val, max_nums );
+    print "测试服务器[%s:%d], 最大连接数:[%d]" \
+        % ( host_val, port_val, max_nums );
+
+    widgets = [ '测试', progressbar.Percentage(), ' ', progressbar.Bar( marker=progressbar.RotatingMarker('#'))  ];
+    progress = progressbar.ProgressBar( widgets= widgets, maxval=max_nums ).start();
+    for i in range( 1, max_nums ):
+        progress.update( i );
+        time.sleep( 0.05 );
+    progress.finish();
     pass;
 
