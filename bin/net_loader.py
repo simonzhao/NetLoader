@@ -7,14 +7,21 @@ sys.setdefaultencoding( 'utf8' );
 import getopt;
 import progressbar;
 import time;
-import thread;
+import threading;
+import syslog;
 
 host_val = "";
 port_val = 0;
 max_nums = 0;
 
-def runner( host, val ):
-    print "Host:%s\tPort:%d" % ( host, val );
+class Runner( threading.Thread ):
+    def setHost( self, host ):
+        self._host = host;
+
+    def setPort( self, port ):
+        self._port = port;
+    def run( self ):
+        syslog.syslog( syslog.LOG_INFO, "Ident:%s\tHost:%s\tPort:%d" % ( self.getName(),  self._host, self._port ));
     pass;
 
 if __name__ == "__main__":
@@ -37,6 +44,8 @@ if __name__ == "__main__":
         elif name == '--max':
             max_nums = int( value );
 
+    syslog.openlog( 'NetLoader', syslog.LOG_PID, syslog.LOG_LOCAL4 );
+
     print "测试服务器[%s:%d], 最大连接数:[%d]" \
         % ( host_val, port_val, max_nums );
 
@@ -44,8 +53,14 @@ if __name__ == "__main__":
     progress = progressbar.ProgressBar( widgets= widgets, maxval=max_nums ).start();
     for i in range( 1, max_nums ):
         progress.update( i );
-        thread.start_new_thread( runner, ( host_val, port_val ) );
+        #t = threading.Thread( target=runner, args=( host_val, port_val) );
+        t = Runner();
+        t.setHost( host_val );
+        t.setPort( port_val );
+        t.start();
         time.sleep( 0.05 );
     progress.finish();
+
+    syslog.closelog();
     pass;
 
