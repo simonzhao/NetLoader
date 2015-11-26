@@ -19,7 +19,6 @@ port_val = 0;
 max_nums = 0;
 
 class Runner( threading.Thread ):
-
     def setHost( self, host ):
         self._host = host;
 
@@ -27,25 +26,35 @@ class Runner( threading.Thread ):
         self._port = port;
 
     def run( self ):
+        self.__waitTime = 0;
+        self.__runNums = 0;
+        self.__runTime = 0;
+
         w = random.uniform(0, 2);
         syslog.syslog( syslog.LOG_INFO, "Ident:%s\tWait:%f" % ( self.getName(), w ));
         time.sleep( w );
         syslog.syslog( syslog.LOG_INFO, "Ident:%s\tHost:%s\tPort:%d" % ( self.getName(),  self._host, self._port ));
 
+        runStartTime = time.time();
         conn = websocket.create_connection( "ws://%s:%d/" % ( self._host, self._port ) );
         #conn = socket.socket();
         try:
             #conn.connect( ( self._host, self._port ) );
             for i in xrange( 30 ):
                 data = str( uuid.uuid1() );
+                startTime = time.time();
                 conn.send( data );
                 recv = conn.recv( );
-                #recv = "";
+                payTime = time.time() - startTime;
+                self.__waitTime = self.__waitTime + payTime;
+                self.__runNums += 1;
 
                 syslog.syslog( syslog.LOG_INFO, 'Ident:[%s]\tNo:[%d]\tSend:[%s]\tRecv:[%s]' % ( self.getName(), i, data, recv ) );
                 time.sleep( 1 );
         finally:
             conn.close();
+            self.__runTime = time.time() - runStartTime;
+            print 'Ident:[%s]\tRun:[%d]\tRunTime:[%f]\tWaitTime:[%f]' % ( self.getName(), self.__runNums, self.__runTime, self.__waitTime );
         return;
     pass;
 
