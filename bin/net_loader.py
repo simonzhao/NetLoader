@@ -51,7 +51,7 @@ class Runner( multiprocessing.Process ):
         #conn = socket.socket();
         try:
             #conn.connect( ( self._host, self._port ) );
-            for i in xrange( 30 ):
+            for i in xrange( 60 ):
                 data = str( uuid.uuid1() );
                 startTime = time.time();
                 conn.send( data );
@@ -62,7 +62,8 @@ class Runner( multiprocessing.Process ):
                 self.__runNums += 1;
 
                 syslog.syslog( syslog.LOG_INFO, 'Ident:[%s]\tNo:[%d]\tSend:[%s]\tRecv:[%s]' % ( self.getName(), i, data, recv ) );
-                time.sleep( 1 );
+                w = random.uniform(0, 3);
+                time.sleep( w );
         finally:
             conn.close();
             self.__runTime = time.time() - runStartTime;
