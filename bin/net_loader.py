@@ -22,12 +22,16 @@ max_nums = 0;
 process_nums = 0;
 threads_nums = 0;
 
-class Runner( threading.Thread ):
+#class Runner( threading.Thread ):
+class Runner( multiprocessing.Process ):
     def setHost( self, host ):
         self._host = host;
 
     def setPort( self, port ):
         self._port = port;
+
+    def getName( self ):
+        return "Process-" + str( os.getpid() );
 
     def run( self ):
         #print "进程%d\t线程%s" % ( os.getpid(), self.getName() );
@@ -42,6 +46,8 @@ class Runner( threading.Thread ):
 
         runStartTime = time.time();
         conn = websocket.create_connection( "ws://%s:%d/" % ( self._host, self._port ) );
+        connPayTime = time.time() - runStartTime;
+        queryPayTimes = [];
         #conn = socket.socket();
         try:
             #conn.connect( ( self._host, self._port ) );
@@ -51,6 +57,7 @@ class Runner( threading.Thread ):
                 conn.send( data );
                 recv = conn.recv( );
                 payTime = time.time() - startTime;
+                queryPayTimes.append( payTime );
                 self.__waitTime = self.__waitTime + payTime;
                 self.__runNums += 1;
 
@@ -59,24 +66,13 @@ class Runner( threading.Thread ):
         finally:
             conn.close();
             self.__runTime = time.time() - runStartTime;
-            print 'Process:[%d]\tIdent:[%s]\tRun:[%d]\tRunTime:[%f]\tWaitTime:[%f]' % ( os.getpid(), self.getName(), self.__runNums, self.__runTime, self.__waitTime );
+
+            maxPayTime = max( queryPayTimes );
+            minPayTime = min( queryPayTimes );
+            print 'Process:[%d]\tIdent:[%s]\tRun:[%d]\tRunTime:[%f]\tWaitTime:[%.2f]\tMax:[%.3f]\tMin:[%.3f]\tConnectPay:[%.3f]'\
+                    % ( os.getpid(), self.getName(), self.__runNums, self.__runTime, self.__waitTime, maxPayTime, minPayTime, connPayTime );
         return;
     pass;
-
-def worker( ):
-    #print "工作进程:", os.getpid();
-
-    ts = [];
-    for i in range( 0, threads_nums ):
-        t = Runner();
-        t.setHost( host_val );
-        t.setPort( port_val );
-        t.start();
-        ts.append( t );
-
-    for t in ts:
-        t.join();
-    #print "工作进程:%d 运行结束" % ( os.getpid());
 
 if __name__ == "__main__":
     options, args = getopt.getopt(
@@ -118,7 +114,9 @@ if __name__ == "__main__":
         elif child_pid > 0:
             print "父进程";
         """
-        p = multiprocessing.Process( target=worker );
+        p = Runner();
+        p.setHost( host_val );
+        p.setPort( port_val );
         p.start();
         ps.append( p );
         pass;
